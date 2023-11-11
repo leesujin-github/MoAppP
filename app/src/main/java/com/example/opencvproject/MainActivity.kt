@@ -1,74 +1,194 @@
-package com.example.opencvproject
+/*package com.example.opencvproject
 
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import com.example.opencvproject.databinding.ActivityMainBinding
-import org.opencv.android.OpenCVLoader
-import org.opencv.core.Core
-import org.opencv.core.Mat
-import org.opencv.core.Scalar
-import org.opencv.android.Utils
-import org.opencv.imgproc.Imgproc
+import android.os.Bundle
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var binding: ActivityMainBinding
-    private lateinit var candies: Mat
-    private lateinit var dst: Mat
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // 레이아웃 설정
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        setContentView(R.layout.activity_main)
+    }
+}*/
 
-        // OpenCV 초기화
+package com.example.opencvproject
+
+import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.Rect
+import androidx.appcompat.app.AppCompatActivity
+import android.os.Bundle
+import android.provider.MediaStore
+import android.util.Log
+import android.view.MotionEvent
+import android.widget.ImageView
+import android.widget.TextView
+import androidx.appcompat.widget.AppCompatImageView
+import org.opencv.android.OpenCVLoader
+import org.opencv.android.Utils
+import org.opencv.core.Core
+import org.opencv.core.CvType
+import org.opencv.core.CvType.CV_8UC3
+import org.opencv.core.Mat
+import org.opencv.core.Scalar
+import org.opencv.imgproc.Imgproc
+
+private const val TAG = "TEST_OPEN_CV_ANDROID"
+
+class MainActivity : AppCompatActivity() {
+    private lateinit var imageView: ImageView
+    private lateinit var textViewRGB: TextView
+    private lateinit var textViewColor: TextView
+    private lateinit var bitmap: Bitmap
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        // OpenCV 라이브러리 초기화
         OpenCVLoader.initDebug()
 
-        // 이미지 로드
-        candies = loadCandiesImage()
+        imageView = findViewById(R.id.imageView)
+        textViewRGB = findViewById(R.id.textViewRGB)
+        textViewColor = findViewById(R.id.textViewColor)
+        bitmap = BitmapFactory.decodeResource(resources, R.drawable.candies)
 
-        // BGR 색 공간을 HSV로 변환
-        Imgproc.cvtColor(candies, candies, Imgproc.COLOR_BGR2HSV)
+        imageView.setImageBitmap(bitmap)
+        imageView.setOnTouchListener { v, event ->
+            if (event.action == MotionEvent.ACTION_DOWN) {
+                val x = event.rawX.toInt()
+                val y = event.rawY.toInt()
 
-        dst = Mat()
+                val location = IntArray(2)
+                v.getLocationOnScreen(location)
+                val viewX = location[0]
+                val viewY = location[1]
 
-        // 이미지 업데이트 함수
-        fun updateImage() {
-            // HSV 범위 설정
-            val h = binding.rangeH.values
-            val s = binding.rangeS.values
-            val v = binding.rangeV.values
+                val imageX = x - viewX
+                val imageY = y - viewY
 
-            // 최소 및 최대 HSV 값 생성
-            val lower = Scalar(h[0].toDouble(), s[0].toDouble(), v[0].toDouble())
-            val upper = Scalar(h[1].toDouble(), s[1].toDouble(), v[1].toDouble())
+                val imageWidth = v.width
+                val imageHeight = v.height
 
-            // Core.inRange 함수를 사용하여 필터링
-            Core.inRange(candies, lower, upper, dst)
+                val relativeX = (imageX.toFloat() / imageWidth * bitmap.width).toInt()
+                val relativeY = (imageY.toFloat() / imageHeight * bitmap.height).toInt()
 
-            // 필터링된 결과를 binding.dst에 표시
-            val bitmap = Bitmap.createBitmap(dst.cols(), dst.rows(), Bitmap.Config.RGB_565)
-            Utils.matToBitmap(dst, bitmap)
-            binding.dst.setImageBitmap(bitmap)
+                val rgb = getRGB(relativeX, relativeY)
+                showRGB(rgb)
+                showColorName(rgb)
+
+                // 클릭한 부분을 표시할 네모 이미지를 생성합니다.
+                val rectBitmap = Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888)
+                val canvas = Canvas(rectBitmap)
+                val rectPaint = Paint().apply {
+                    color = Color.WHITE // 네모 이미지의 색상을 설정합니다.
+                    style = Paint.Style.STROKE
+                    strokeWidth = 20f
+                }
+
+                // 클릭한 부분의 좌표를 기준으로 사각형의 좌표값을 계산합니다.
+                val rectLeft = relativeX - 100
+                val rectTop = relativeY - 100
+                val rectRight = relativeX + 100
+                val rectBottom = relativeY + 100
+
+                canvas.drawRect(rectLeft.toFloat(), rectTop.toFloat(), rectRight.toFloat(), rectBottom.toFloat(), rectPaint)
+
+                // 클릭한 부분의 이미지와 네모 이미지를 결합합니다.
+                val combinedBitmap = Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888)
+                val combinedCanvas = Canvas(combinedBitmap)
+                combinedCanvas.drawBitmap(bitmap, 0f, 0f, null)
+                combinedCanvas.drawBitmap(rectBitmap, 0f, 0f, null)
+
+                // 이미지뷰에 결합된 이미지를 설정합니다.
+                imageView.setImageBitmap(combinedBitmap)
+            }
+            true
         }
-
-        // Slider 값 변경 이벤트 처리
-        binding.rangeH.addOnChangeListener { _, _, _ -> updateImage() }
-        binding.rangeS.addOnChangeListener { _, _, _ -> updateImage() }
-        binding.rangeV.addOnChangeListener { _, _, _ -> updateImage() }
     }
 
-    private fun loadCandiesImage(): Mat {
-        // 이미지 리소스 로드
-        val resourceId = resources.getIdentifier("candies", "drawable", packageName)
-        val bitmap = BitmapFactory.decodeResource(resources, resourceId)
-
-        // Bitmap을 Mat으로 변환
-        val mat = Mat()
+    private fun getRGB(x: Int, y: Int): IntArray {
+        val mat = Mat(bitmap.height, bitmap.width, CvType.CV_8UC4)
         Utils.bitmapToMat(bitmap, mat)
-        return mat
+
+        val pixel = mat.get(y, x)
+        val rgb = IntArray(3)
+        rgb[0] = pixel[0].toInt() and 0xFF // Red
+        rgb[1] = pixel[1].toInt() and 0xFF // Green
+        rgb[2] = pixel[2].toInt() and 0xFF // Blue
+
+        return rgb
+    }
+
+    private fun showRGB(rgb: IntArray) {
+        val (red, green, blue) = rgb
+        val rgbText = String.format("#%02X%02X%02X", red, green, blue)
+        textViewRGB.text = "$rgbText"
+    }
+
+    private fun getColorName(red: Int, green: Int, blue: Int): String {
+        val colorMap = mapOf(
+            "White" to intArrayOf(255, 255, 255),
+            "Black" to intArrayOf(0, 0, 0),
+            "Red" to intArrayOf(255, 0, 0),
+            "Orange" to intArrayOf(255, 165, 0),
+            "Yellow" to intArrayOf(255, 255, 0),
+            "Light Green" to intArrayOf(192, 255, 0),
+            "Green" to intArrayOf(0, 255, 0),
+            "Mint" to intArrayOf(0, 255, 192),
+            "Sky Blue" to intArrayOf(0, 255, 255),
+            "Baby Blue" to intArrayOf(0, 192, 255),
+            "Blue" to intArrayOf(0, 0, 255),
+            "Purple" to intArrayOf(192, 0, 255),
+            "Pink" to intArrayOf(255, 0, 192),
+            "Light Red" to intArrayOf(255, 192, 192),
+            "Peach" to intArrayOf(255, 218, 185),
+            "Pale Yellow" to intArrayOf(255, 255, 192),
+            "Pale Green" to intArrayOf(192, 255, 192),
+            "Pale Sky Blue" to intArrayOf(192, 255, 255),
+            "Pale Blue" to intArrayOf(192, 192, 255),
+            "Pale Purple" to intArrayOf(255, 192, 255),
+            "Brown" to intArrayOf(165, 42, 42),
+            "Gray" to intArrayOf(128, 128, 128),
+            "Dark Red" to intArrayOf(128, 0, 0),
+            "Dark Orange" to intArrayOf(128, 85, 0),
+            "Dark Yellow" to intArrayOf(128, 128, 0),
+            "Dark Green" to intArrayOf(0, 128, 0),
+            "Dark Sky Blue" to intArrayOf(0, 128, 128),
+            "Dark Blue" to intArrayOf(0, 0, 128),
+            "Dark Purple" to intArrayOf(85, 0, 128),
+            "Dark Pink" to intArrayOf(128, 0, 85)
+        )
+
+        var ColorName = ""
+        var minDistance = Double.MAX_VALUE
+
+        for ((colorName, colorValue) in colorMap) {
+            val distance = Math.sqrt(
+                Math.pow(red - colorValue[0].toDouble(), 2.0) +
+                        Math.pow(green - colorValue[1].toDouble(), 2.0) +
+                        Math.pow(blue - colorValue[2].toDouble(), 2.0)
+            )
+            if (distance < minDistance) {
+                minDistance = distance
+                ColorName = colorName
+            }
+        }
+
+        return ColorName
+    }
+
+    private fun showColorName(rgb: IntArray) {
+        val (red, green, blue) = rgb
+        val colorName = getColorName(red, green, blue)
+        val colorText = " $colorName"
+        textViewColor.text = colorText
+        //textViewColor.setBackgroundColor(android.graphics.Color.rgb(red, green, blue))
+        val colorBox = findViewById<TextView>(R.id.colorBox)
+        colorBox.setBackgroundColor(android.graphics.Color.rgb(red, green, blue))
     }
 }
