@@ -28,6 +28,7 @@ import android.view.MotionEvent
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.widget.AppCompatImageView
+import com.example.opencvproject.databinding.ActivityMainBinding
 import org.opencv.android.OpenCVLoader
 import org.opencv.android.Utils
 import org.opencv.core.Core
@@ -47,9 +48,11 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        val binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+        //setContentView(R.layout.activity_main)
 
-        // OpenCV 라이브러리 초기화
+        // OpenCV 초기화
         OpenCVLoader.initDebug()
 
         imageView = findViewById(R.id.imageView)
@@ -91,10 +94,10 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 // 클릭한 부분의 좌표를 기준으로 사각형의 좌표값을 계산합니다.
-                val rectLeft = relativeX - 100
-                val rectTop = relativeY - 100
-                val rectRight = relativeX + 100
-                val rectBottom = relativeY + 100
+                val rectLeft = relativeX - 50
+                val rectTop = relativeY - 50
+                val rectRight = relativeX + 50
+                val rectBottom = relativeY + 50
 
                 canvas.drawRect(rectLeft.toFloat(), rectTop.toFloat(), rectRight.toFloat(), rectBottom.toFloat(), rectPaint)
 
@@ -132,36 +135,30 @@ class MainActivity : AppCompatActivity() {
 
     private fun getColorName(red: Int, green: Int, blue: Int): String {
         val colorMap = mapOf(
-            "White" to intArrayOf(255, 255, 255),
-            "Black" to intArrayOf(0, 0, 0),
-            "Red" to intArrayOf(255, 0, 0),
-            "Orange" to intArrayOf(255, 165, 0),
-            "Yellow" to intArrayOf(255, 255, 0),
-            "Light Green" to intArrayOf(192, 255, 0),
-            "Green" to intArrayOf(0, 255, 0),
-            "Mint" to intArrayOf(0, 255, 192),
-            "Sky Blue" to intArrayOf(0, 255, 255),
-            "Baby Blue" to intArrayOf(0, 192, 255),
-            "Blue" to intArrayOf(0, 0, 255),
-            "Purple" to intArrayOf(192, 0, 255),
-            "Pink" to intArrayOf(255, 0, 192),
-            "Light Red" to intArrayOf(255, 192, 192),
-            "Peach" to intArrayOf(255, 218, 185),
-            "Pale Yellow" to intArrayOf(255, 255, 192),
-            "Pale Green" to intArrayOf(192, 255, 192),
-            "Pale Sky Blue" to intArrayOf(192, 255, 255),
-            "Pale Blue" to intArrayOf(192, 192, 255),
-            "Pale Purple" to intArrayOf(255, 192, 255),
-            "Brown" to intArrayOf(165, 42, 42),
-            "Gray" to intArrayOf(128, 128, 128),
-            "Dark Red" to intArrayOf(128, 0, 0),
-            "Dark Orange" to intArrayOf(128, 85, 0),
-            "Dark Yellow" to intArrayOf(128, 128, 0),
-            "Dark Green" to intArrayOf(0, 128, 0),
-            "Dark Sky Blue" to intArrayOf(0, 128, 128),
-            "Dark Blue" to intArrayOf(0, 0, 128),
-            "Dark Purple" to intArrayOf(85, 0, 128),
-            "Dark Pink" to intArrayOf(128, 0, 85)
+            "White(흰색)" to intArrayOf(255, 255, 255),
+            "Ivory(아이보리색)" to intArrayOf(255, 255, 240),
+            "Lemon Yellow(레몬색)" to intArrayOf(255, 247, 0),
+            "Yellow(노란색)" to intArrayOf(255, 255, 0),
+            "Pale Orange(연주황색)" to intArrayOf(255, 178, 102),
+            "Orange(주황색)" to intArrayOf(255, 165, 0),
+            "Vermilion(다홍색)" to intArrayOf(227, 66, 52),
+            "Red(빨간색)" to intArrayOf(255, 0, 0),
+            "Pink(분홍색)" to intArrayOf(255, 192, 203),
+            "Yellow Ochre(황토색)" to intArrayOf(227, 168, 87),
+            "Brown(갈색)" to intArrayOf(165, 42, 42),
+            "Vandyke Brown(고동색)" to intArrayOf(112, 48, 160),
+            "Yellow Green(연두)" to intArrayOf(204, 255, 0),
+            "Green(초록색)" to intArrayOf(0, 255, 0),
+            "Viridian(짙은녹색)" to intArrayOf(0, 100, 0),
+            "Blue Green(청록색)" to intArrayOf(0, 255, 255),
+            "Olive Green(짙은 녹두색)" to intArrayOf(0, 128, 0),
+            "Sky Blue(하늘색)" to intArrayOf(135, 206, 235),
+            "Cobalt Blue(파랑색)" to intArrayOf(0, 0, 255),
+            "Ultramarine(군청색)" to intArrayOf(0, 0, 128),
+            "Red Purple(자주색)" to intArrayOf(128, 0, 128),
+            "Prussian Blue(남색색)" to intArrayOf(0, 0, 139),
+            "Violet(남보라색)" to intArrayOf(83, 32, 161),
+            "Black(검정색)" to intArrayOf(0, 0, 0),
         )
 
         var ColorName = ""
