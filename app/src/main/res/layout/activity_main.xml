@@ -77,7 +77,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:text="#ffffff"
             android:textColor="@color/md_grey_800"
             android:textSize="30sp"
             android:textStyle="bold"/>
@@ -90,8 +89,14 @@
             android:textSize="30sp"
             android:textStyle="bold"/>
 
-
-
+        <ImageView
+            android:id="@+id/cameraIcon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/camera"
+            android:clickable="true"
+            android:onClick="openCamera"
+            />
 
 
     </LinearLayout>
